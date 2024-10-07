@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response, session
 import pandas as pd
-from recommender import recommend, recommend_season, get_clothes_info
+from models.recommender import recommend, recommend_season, get_clothes_info
 
 recommendation_bp = Blueprint('recommendation', __name__)
 

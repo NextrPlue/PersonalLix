@@ -13,9 +13,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 def get_clothes_info(gender, clothes_name):
     if gender == 'man':
-        clothes_path = './preprocessed/TL_man_clothes_2019.csv'
+        clothes_path = 'models/preprocessed_data/TL_man_clothes_2019.csv'
     elif gender == 'woman':
-        clothes_path = './preprocessed/TL_woman_clothes_2019.csv'
+        clothes_path = 'models/preprocessed_data/TL_woman_clothes_2019.csv'
     else:
         return None
 
@@ -30,10 +30,10 @@ def recommend(gender, age, color, face, body):
         age_group = _get_age_group(age)
         if gender.lower() == 'man':
             return _recommend_internal(
-                './preprocessed/TL_man_clothes_2019.csv',
-                './preprocessed/TL_man_rating_2019.csv',
-                './encoder/onehot_encoder_man.pkl',
-                './model/random_man.pkl',
+                'models/preprocessed_data/TL_man_clothes_2019.csv',
+                'models/preprocessed_data/TL_man_rating_2019.csv',
+                'models/model_files/onehot_encoder_man.pkl',
+                'models/model_files/random_man.pkl',
                 '남성',
                 age_group,
                 color.lower(),
@@ -42,10 +42,10 @@ def recommend(gender, age, color, face, body):
             )
         elif gender.lower() == 'woman':
             return _recommend_internal(
-                './preprocessed/TL_woman_clothes_2019.csv',
-                './preprocessed/TL_woman_rating_2019.csv',
-                './encoder/onehot_encoder_woman.pkl',
-                './model/random_woman.pkl',
+                'models/preprocessed_data/TL_woman_clothes_2019.csv',
+                'models/preprocessed_data/TL_woman_rating_2019.csv',
+                'models/model_files/onehot_encoder_woman.pkl',
+                'models/model_files/random_woman.pkl',
                 '여성',
                 age_group,
                 color.lower(),
@@ -66,10 +66,10 @@ def recommend_season(gender, age, color, face, body, season):
         age_group = _get_age_group(age)
         if gender.lower() == 'man':
             return _recommend_internal(
-                './preprocessed/TL_man_clothes_2019.csv',
-                './preprocessed/TL_man_rating_2019.csv',
-                './encoder/onehot_encoder_man.pkl',
-                './model/random_man.pkl',
+                'models/preprocessed_data/TL_man_clothes_2019.csv',
+                'models/preprocessed_data/TL_man_rating_2019.csv',
+                'models/model_files/onehot_encoder_man.pkl',
+                'models/model_files/random_man.pkl',
                 '남성',
                 age_group,
                 color.lower(),
@@ -79,10 +79,10 @@ def recommend_season(gender, age, color, face, body, season):
             )
         elif gender.lower() == 'woman':
             return _recommend_internal(
-                './preprocessed/TL_woman_clothes_2019.csv',
-                './preprocessed/TL_woman_rating_2019.csv',
-                './encoder/onehot_encoder_woman.pkl',
-                './model/random_woman.pkl',
+                'models/preprocessed_data/TL_woman_clothes_2019.csv',
+                'models/preprocessed_data/TL_woman_rating_2019.csv',
+                'models/model_files/onehot_encoder_woman.pkl',
+                'models/model_files/random_woman.pkl',
                 '여성',
                 age_group,
                 color.lower(),
@@ -144,20 +144,20 @@ def _recommend_internal(clothes_path, rating_path, encoder_path, model_path, gen
 def update_model(gender, age, color, faceshape, bodyshape, clothes, rating):
     if gender =='man':
         gender='남성'
-        clothes_path = './preprocessed/TL_man_clothes_2019.csv'
-        model_path = './model/random_man.pkl'
-        train_x_path = './train/train_x_man.csv'
-        train_y_path = './train/train_y_man.csv'
-        encoder_path = './encoder/onehot_encoder_man.pkl'
-        rating_path = './preprocessed/TL_man_rating_2019.csv'
+        clothes_path = 'models/preprocessed_data/TL_man_clothes_2019.csv'
+        model_path = 'models/model_files/random_man.pkl'
+        train_x_path = '../train/train_x_man.csv'
+        train_y_path = '../train/train_y_man.csv'
+        encoder_path = 'models/model_files/onehot_encoder_man.pkl'
+        rating_path = 'models/preprocessed_data/TL_man_rating_2019.csv'
     else:
         gender='여성'
-        clothes_path = './preprocessed/TL_woman_clothes_2019.csv'
-        encoder_path = './encoder/onehot_encoder_woman.pkl'
-        model_path = './model/random_woman.pkl'
-        train_x_path = './train/train_x_woman.csv'
-        train_y_path = './train/train_y_woman.csv'
-        rating_path = './preprocessed/TL_woman_rating_2019.csv'
+        clothes_path = 'models/preprocessed_data/TL_woman_clothes_2019.csv'
+        encoder_path = 'models/model_files/onehot_encoder_woman.pkl'
+        model_path = 'models/model_files/random_woman.pkl'
+        train_x_path = '../train/train_x_woman.csv'
+        train_y_path = '../train/train_y_woman.csv'
+        rating_path = 'models/preprocessed_data/TL_woman_rating_2019.csv'
     
     try:
         ratings = pd.read_csv(rating_path)
@@ -190,4 +190,4 @@ def update_model(gender, age, color, faceshape, bodyshape, clothes, rating):
         reg.fit(train_x,train_y)
         joblib.dump(reg, model_path) 
     except:
-        print('fail to update model...')
+        print('fail to update model_files...')

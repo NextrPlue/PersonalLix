@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify, make_response, session, send_file
 import os
 import numpy as np
 import cv2
-from get_face_shape import get_face_shape
-from get_body_shape import get_body_shape
+from models.get_face_shape import get_face_shape
+from models.get_body_shape import get_body_shape
 
 main_bp = Blueprint('main_bp', __name__)
 

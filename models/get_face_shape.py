@@ -2,14 +2,14 @@ import tensorflow as tf
 import cv2
 import numpy as np
 
-interpreter = tf.lite.Interpreter(model_path='model/faceshape_efficientnetb4_crop.tflite')
+interpreter = tf.lite.Interpreter(model_path='models/model_files/faceshape_efficientnetb4_crop.tflite')
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 FACES_SHAPES = ['heart','oblong','oval','round','square']
-face_cascade = cv2.CascadeClassifier('./model/haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('models/model_files/haarcascade_frontalface_default.xml')
 
 def get_face_shape(face_image):
     try:

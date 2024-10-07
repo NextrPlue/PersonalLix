@@ -1,6 +1,6 @@
 import redis
 from rq import Worker, Queue, Connection
-from recommender import update_model
+from models.recommender import update_model
 
 redis_conn = redis.Redis()
 
