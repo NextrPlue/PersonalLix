@@ -158,7 +158,6 @@ def recommend_season_response():
     start = page * 50
     end = start + 50
 
-    # Retrieve or compute seasonal recommendations
     df = _get_recommendations_from_session('dataframe', recommend_season, data)
 
     if len(df) <= start:
@@ -208,32 +207,22 @@ def get_photo(gender, image_name):
     else:
         return make_response(jsonify({"error": "Image not found"}), 404)
 
-
 @app.route("/clear")
 def session_out():
     session.clear()
     return make_response(jsonify({"info": "session clear"}), 200)
+
 @app.route('/feedback', methods=['POST'])
 def updade_model_req():
+    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'clothes', 'rating']
     data = request.json
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
 
-    if 'gender' not in data:
-        return make_response(jsonify({"error": "No gender found"}), 400)
-    if 'age' not in data:
-        return make_response(jsonify({"error": "No age found"}), 400)
-    if 'color' not in data:
-        return make_response(jsonify({"error": "No color found"}), 400)
-    if 'faceshape' not in data:
-        return make_response(jsonify({"error": "No faceshape found"}), 400)
-    if 'bodyshape' not in data:
-        return make_response(jsonify({"error": "No bodyshape found"}), 400)
-    if 'clothes' not in data:
-        return make_response(jsonify({"error": "No clothes found"}), 400)
-    if 'rating' not in data:
-        return make_response(jsonify({"error": "No rating found"}), 400)
-
-    job = task_queue.enqueue(update_data,data)
-    return make_response(jsonify({"info": f"job submitted: {job.get_id()}"}), 200)
+    # Enqueue the update task
+    job = task_queue.enqueue(update_data, data)
+    return make_response(jsonify({"info": f"Job submitted: {job.get_id()}"}), 200)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000,debug=True)
