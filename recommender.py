@@ -125,7 +125,10 @@ def _recommend_internal(clothes_path, rating_path, encoder_path, model_path, gen
     with open(encoder_path, 'rb') as f:
         encoder = pickle.load(f)
     df_encoded = encoder.transform(df.loc[:, 'r_gender':'분위기'])
-    df_encoded = pd.DataFrame(df_encoded, columns=encoder.get_feature_names_out())
+    df_encoded = pd.DataFrame(
+        df_encoded,
+        columns=[f"col{i}_{elem}" for i, sublist in enumerate(encoder.categories_) for elem in sublist]
+    )
     df_test = pd.concat([df_encoded, df.loc[:, '멋있다':].astype(np.int8)], axis=1)
 
     predict = reg.predict(df_test)
@@ -188,5 +191,3 @@ def update_model(gender, age, color, faceshape, bodyshape, clothes, rating):
         joblib.dump(reg, model_path) 
     except:
         print('fail to update model...')
-
-    
