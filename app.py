@@ -111,114 +111,86 @@ def _read_image(file_storage):
 
 @app.route('/recommend',methods=['POST'])
 def recommend_response():
-    if 'gender' not in request.json:
-        return make_response(jsonify({"error": "No gender found"}), 400)
-    if 'age' not in request.json:
-        return make_response(jsonify({"error": "No age found"}), 400)
-    if 'color' not in request.json:
-        return make_response(jsonify({"error": "No color found"}), 400)
-    if 'faceshape' not in request.json:
-        return make_response(jsonify({"error": "No faceshape found"}), 400)
-    if 'bodyshape' not in request.json:
-        return make_response(jsonify({"error": "No bodyshape found"}), 400)
-    if 'page' not in request.json: # page start at 0
-        return make_response(jsonify({"error": "No page found"}), 400)
-    gender = request.json['gender']
-    age = request.json['age']
-    color = request.json['color']
-    faceshape = request.json['faceshape']
-    bodyshape = request.json['bodyshape']
-    page = int(request.json['page'])
+    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'page']
+    data = request.json
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
 
-    isFinal=0
+    try:
+        page = int(data['page'])
+    except ValueError:
+        return make_response(jsonify({"error": "Invalid page value"}), 400)
 
-    start = page*50
-    end = start+50
+    is_final = False
+    start = page * 50
+    end = start + 50
 
-    df=''
-    if 'dataframe' in session:
-        data = session['dataframe']
-        df=pd.read_json(data,orient='index')
-    else:
-        df = recommend(gender,age,color,faceshape,bodyshape).reset_index(drop=True)
-        if df is None:
-            return make_response(jsonify({"error": "fail to recommend..."}), 500)
-        df.columns = ['image','predict','average','total']
-        session['dataframe'] = df.to_json(orient='index')
+    df = _get_recommendations_from_session('dataframe', recommend, data)
 
+    if len(df) <= start:
+        return make_response(jsonify({"error": "Page out of index"}), 404)
 
+    if len(df) < end:
+        end = len(df)
+        is_final = True
 
-    if len(df)<=start:
-        return make_response(jsonify({"error": f"page out of index: len(df) is {len(df)}"}), 404)
-
-    if len(df)<end:
-        end=len(df)
-        isFinal=1
-    # df: image, 예상평점, 평균선호, 종합평점
-    df = df.iloc[start:end,:]
-
-    json_data = df.to_json(orient='index')
-
-    res =  make_response(json_data,200)
-    res.headers['isfinal'] = str(isFinal)
-    return res
-
+    df_slice = df.iloc[start:end, :]
+    json_data = df_slice.to_json(orient='index')
+    response = make_response(json_data, 200)
+    response.headers['isfinal'] = str(int(is_final))
+    return response
 
 @app.route('/recommend_season',methods=['POST'])
 def recommend_season_response():
-    if 'gender' not in request.json:
-        return make_response(jsonify({"error": "No gender found"}), 400)
-    if 'age' not in request.json:
-        return make_response(jsonify({"error": "No age found"}), 400)
-    if 'color' not in request.json:
-        return make_response(jsonify({"error": "No color found"}), 400)
-    if 'faceshape' not in request.json:
-        return make_response(jsonify({"error": "No faceshape found"}), 400)
-    if 'bodyshape' not in request.json:
-        return make_response(jsonify({"error": "No bodyshape found"}), 400)
-    if 'season' not in request.json:
-        return make_response(jsonify({"error": "No season found"}), 400)
-    if 'page' not in request.json: # page start at 0
-        return make_response(jsonify({"error": "No page found"}), 400)
-    gender = request.json['gender']
-    age = request.json['age']
-    color = request.json['color']
-    faceshape = request.json['faceshape']
-    bodyshape = request.json['bodyshape']
-    season = request.json['season']
-    page = int(request.json['page'])
+    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'season', 'page']
+    data = request.json
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
 
-    isFinal=0
+    try:
+        page = int(data['page'])
+    except ValueError:
+        return make_response(jsonify({"error": "Invalid page value"}), 400)
 
-    start = page*50
-    end = start+50
+    is_final = False
+    start = page * 50
+    end = start + 50
 
-    df=''
-    if 'dataframe' in session:
-        data = session['dataframe']
-        df=pd.read_json(data,orient='index')
+    # Retrieve or compute seasonal recommendations
+    df = _get_recommendations_from_session('dataframe', recommend_season, data)
+
+    if len(df) <= start:
+        return make_response(jsonify({"error": "Page out of index"}), 404)
+
+    if len(df) < end:
+        end = len(df)
+        is_final = True
+
+    df_slice = df.iloc[start:end, :]
+    json_data = df_slice.to_json(orient='index')
+    response = make_response(json_data, 200)
+    response.headers['isfinal'] = str(int(is_final))
+    return response
+
+def _get_recommendations_from_session(session_key, recommend_func, data):
+    """Helper function to get recommendations, either from session or by computing."""
+    if session_key in session:
+        df = pd.read_json(session[session_key], orient='index')
     else:
-        df = recommend_season(gender,age,color,faceshape,bodyshape,season).reset_index(drop=True)
+        df = recommend_func(
+            data['gender'],
+            data['age'],
+            data['color'],
+            data['faceshape'],
+            data['bodyshape']
+        ).reset_index(drop=True)
         if df is None:
-            return make_response(jsonify({"error": "fail to recommend..."}), 500)
-        session['dataframe'] = df.to_json(orient='index')
-
-
-
-    if len(df)<=start:
-        return make_response(jsonify({"error": f"page out of index: len(df) is {len(df)}"}), 404)
-
-    if len(df)<end:
-        end=len(df)
-        isFinal=1
-    # df: image, 예상평점, 평균선호, 종합평점
-    df = df.iloc[start:end,:]
-    json_data = df.to_json(orient='index')
-
-
-    res = make_response(json_data,200)
-    res.headers['isfinal'] = str(isFinal)
-    return res
+            raise ValueError("Failed to generate recommendations")
+        df.columns = ['image', 'predict', 'average', 'total']
+        session[session_key] = df.to_json(orient='index')
+    return df
 
 @app.route('/photo/<gender>/<image_name>', methods=['GET'])
 def get_photo(gender, image_name):
