@@ -194,28 +194,23 @@ def _get_recommendations_from_session(session_key, recommend_func, data):
 
 @app.route('/photo/<gender>/<image_name>', methods=['GET'])
 def get_photo(gender, image_name):
-    # category와 image_name을 기반으로 이미지 경로 설정
-    image_dir=''
-    if gender=='man':
-        image_dir = '../FashionWebp/man'
-    else:
-        image_dir = '../FashionWebp/woman'
+    valid_genders = ['man', 'woman']
+    if gender not in valid_genders:
+        return make_response(jsonify({"error": "Invalid gender"}), 400)
 
-    if image_name.split('.')[-1] == 'jpg':
-        image_name = image_name.split('.')[0] + '.' + 'webp'
-
+    image_dir = f'../FashionWebp/{gender}'
+    if image_name.endswith('.jpg'):
+        image_name = image_name.rsplit('.', 1)[0] + '.webp'
     image_path = os.path.join(image_dir, image_name)
 
-    # 이미지 파일이 존재하는지 확인
     if os.path.exists(image_path):
         return send_file(image_path, mimetype='image/webp')
     else:
-        # 이미지가 없으면 404 에러 반환
-        return make_response(jsonify({"error": "image not found"}), 404)
+        return make_response(jsonify({"error": "Image not found"}), 404)
+
 
 @app.route("/clear")
 def session_out():
-
     session.clear()
     return make_response(jsonify({"info": "session clear"}), 200)
 @app.route('/feedback', methods=['POST'])
