@@ -32,8 +32,10 @@ color = ['spring', 'summer', 'autumn', 'winter']
 app = Flask(__name__)
 app.secret_key = 'asdf92($(*()))8u983ij9s8eduf98s'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=10)
-r = redis.Redis()
-q = Queue(connection=r)
+
+redis_conn = redis.Redis()
+task_queue = Queue(connection=redis_conn)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
@@ -46,86 +48,66 @@ def hello_world():
 
 @app.route("/info/<gender>/<clothes_name>",methods=['GET'])
 def get_clothes_info_req(gender,clothes_name):
-    if gender == 'man' or gender=='woman':
+    if gender in ['man', 'woman']:
         info = get_clothes_info(gender,clothes_name)
         if info is None:
-            return make_response(jsonify({"error":"unknown clothes name"}),400)
-        return make_response(info.to_json(orient='index',force_ascii=False),200)
+            return make_response(jsonify({"error":"unknown clothes name"}), 400)
+        return make_response(info.to_json(orient='index',force_ascii=False), 200)
     else:
-        return make_response(jsonify({"error":"unknown gender"}),400)
-
-
+        return make_response(jsonify({"error":"unknown gender"}), 400)
 
 @app.route('/upload',methods=['POST'])
 def upload_file():
-    if 'face' not in request.files:
-        return make_response(jsonify({"error":"No face part"}),400)
-    if 'body' not in request.files:
-        return make_response(jsonify({"error":"No body part"}),400)
-    if 'body_handsup' not in request.files:
-        return make_response(jsonify({"error":"No body_handsup part"}),400)
+    required_files = ['face', 'body', 'body_handsup']
+    for file_key in required_files:
+        if file_key not in request.files:
+            return make_response(jsonify({"error": f"No {file_key} part"}), 400)
+        if request.files[file_key].filename == '':
+            return make_response(jsonify({"error": f"No {file_key} photo"}), 400)
+        if not allowed_file(request.files[file_key].filename):
+            return make_response(jsonify({"error": "File type not allowed"}), 400)
 
-    face = request.files['face']
-    body = request.files['body']
-    body_handsup = request.files['body_handsup']
-
-    if 'gender' not in request.form:
-        return make_response(jsonify({"error":"No gender value"}),400)
-    if 'age' not in request.form:
-        return make_response(jsonify({"error":"No age value"}),400)
+    for form_key in ['gender', 'age']:
+        if form_key not in request.form:
+            return make_response(jsonify({"error": f"No {form_key} value"}), 400)
 
     gender = request.form['gender']
-    age = request.form['age']
-    age = int(age)
+    try:
+        age = int(request.form['age'])
+    except ValueError:
+        return make_response(jsonify({"error": "Invalid age value"}), 400)
 
+    try:
+        face_img = _read_image(request.files['face'])
+        body_img = _read_image(request.files['body'])
+        body_handsup_img = _read_image(request.files['body_handsup'])
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 400)
 
-    if face and face.filename == '':
-        return make_response(jsonify({"error":"No face photo"}),400)
-    if body and body.filename == '':
-        return make_response(jsonify({"error":"No body photo"}),400)
-    if body_handsup and body_handsup.filename == '':
-        return make_response(jsonify({"error":"No body_handsup photo"}),400)
+    face_shape = get_face_shape(face_img)
+    if face_shape is None:
+        return make_response(jsonify({"error": "No face detected"}), 400)
 
-    if allowed_file(face.filename) and allowed_file(body.filename) and allowed_file(body_handsup.filename):
-        face_bytes = face.read()
-        facearr = np.frombuffer(face_bytes,np.uint8)
-        face_img = cv2.imdecode(facearr,cv2.IMREAD_COLOR)
+    body_shape = get_body_shape(body_img, body_handsup_img, gender, age)
+    if body_shape is None:
+        return make_response(jsonify({"error": "Failed to determine body shape"}), 400)
 
-        body_bytes = body.read()
-        bodyarr = np.frombuffer(body_bytes,np.uint8)
-        body_img = cv2.imdecode(bodyarr,cv2.IMREAD_COLOR)
+    result = {
+        'gender': gender,
+        'age': age,
+        'color': 'spring',  # Assuming default value; adjust as needed
+        'faceshape': face_shape,
+        'bodyshape': body_shape
+    }
+    return make_response(jsonify(result), 200)
 
-        body_handsup_bytes = body_handsup.read()
-        body_handsuparr = np.frombuffer(body_handsup_bytes,np.uint8)
-        body_handsup_img = cv2.imdecode(body_handsuparr,cv2.IMREAD_COLOR)
-
-        if face_img is None:
-             return make_response(jsonify({"error": "Unable to read face image"}), 400)
-        if body_img is None:
-             return make_response(jsonify({"error": "Unable to read body image"}), 400)
-        if body_handsup_img is None:
-             return make_response(jsonify({"error": "Unable to read body_handsup image"}), 400)
-
-        faceshape = get_face_shape(face_img)
-        if faceshape is None:
-            return make_response(jsonify({"error": "No Face detected"}), 400)
-        # gender: man, woman
-        # age: 20,30,40,50,60
-        bodyshape = get_body_shape(body_img,body_handsup_img,gender,age)
-
-        if bodyshape is None:
-            return make_response(jsonify({"error": "Fail to check bodyshape"}), 400)
-
-        result = {
-            'gender': gender,
-            'age': age,
-            'color': 'spring',
-            'faceshape': faceshape,
-            'bodyshape': bodyshape
-
-        }
-        return make_response(jsonify(result),200)
-    return make_response( jsonify({"error": "the file types are not allowed"}), 400)
+def _read_image(file_storage):
+    file_bytes = file_storage.read()
+    np_array = np.frombuffer(file_bytes, np.uint8)
+    img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError(f"Unable to read image {file_storage.filename}")
+    return img
 
 @app.route('/recommend',methods=['POST'])
 def recommend_response():
@@ -283,7 +265,7 @@ def updade_model_req():
     if 'rating' not in data:
         return make_response(jsonify({"error": "No rating found"}), 400)
 
-    job = q.enqueue(update_data,data)
+    job = task_queue.enqueue(update_data,data)
     return make_response(jsonify({"info": f"job submitted: {job.get_id()}"}), 200)
 
 if __name__ == '__main__':
