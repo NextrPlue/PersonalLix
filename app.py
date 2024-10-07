@@ -1,16 +1,10 @@
-from flask import Flask, request,jsonify, send_file, make_response,session
-import numpy as np
-import cv2
-import pandas as pd
-import os
+from flask import Flask
+from controllers.main_controller import main_bp
+from controllers.recommendation_controller import recommendation_bp
+from controllers.feedback_controller import feedback_bp
 from datetime import timedelta
 import redis
 from rq import Queue
-
-from get_face_shape import get_face_shape
-from get_body_shape import get_body_shape
-from recommender import recommend, recommend_season, get_clothes_info
-from worker import update_data
 
 '''
 class BodyShape(Enum):
@@ -28,7 +22,6 @@ faceshape = ['heart','oblong','oval','round','square']
 color = ['spring', 'summer', 'autumn', 'winter']
 '''
 
-
 app = Flask(__name__)
 app.secret_key = 'asdf92($(*()))8u983ij9s8eduf98s'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=10)
@@ -36,193 +29,9 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=10)
 redis_conn = redis.Redis()
 task_queue = Queue(connection=redis_conn)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
-
-@app.route("/info/<gender>/<clothes_name>",methods=['GET'])
-def get_clothes_info_req(gender,clothes_name):
-    if gender in ['man', 'woman']:
-        info = get_clothes_info(gender,clothes_name)
-        if info is None:
-            return make_response(jsonify({"error":"unknown clothes name"}), 400)
-        return make_response(info.to_json(orient='index',force_ascii=False), 200)
-    else:
-        return make_response(jsonify({"error":"unknown gender"}), 400)
-
-@app.route('/upload',methods=['POST'])
-def upload_file():
-    required_files = ['face', 'body', 'body_handsup']
-    for file_key in required_files:
-        if file_key not in request.files:
-            return make_response(jsonify({"error": f"No {file_key} part"}), 400)
-        if request.files[file_key].filename == '':
-            return make_response(jsonify({"error": f"No {file_key} photo"}), 400)
-        if not allowed_file(request.files[file_key].filename):
-            return make_response(jsonify({"error": "File type not allowed"}), 400)
-
-    for form_key in ['gender', 'age']:
-        if form_key not in request.form:
-            return make_response(jsonify({"error": f"No {form_key} value"}), 400)
-
-    gender = request.form['gender']
-    try:
-        age = int(request.form['age'])
-    except ValueError:
-        return make_response(jsonify({"error": "Invalid age value"}), 400)
-
-    try:
-        face_img = _read_image(request.files['face'])
-        body_img = _read_image(request.files['body'])
-        body_handsup_img = _read_image(request.files['body_handsup'])
-    except Exception as e:
-        return make_response(jsonify({"error": str(e)}), 400)
-
-    face_shape = get_face_shape(face_img)
-    if face_shape is None:
-        return make_response(jsonify({"error": "No face detected"}), 400)
-
-    body_shape = get_body_shape(body_img, body_handsup_img, gender, age)
-    if body_shape is None:
-        return make_response(jsonify({"error": "Failed to determine body shape"}), 400)
-
-    result = {
-        'gender': gender,
-        'age': age,
-        'color': 'spring',  # Assuming default value; adjust as needed
-        'faceshape': face_shape,
-        'bodyshape': body_shape
-    }
-    return make_response(jsonify(result), 200)
-
-def _read_image(file_storage):
-    file_bytes = file_storage.read()
-    np_array = np.frombuffer(file_bytes, np.uint8)
-    img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-    if img is None:
-        raise ValueError(f"Unable to read image {file_storage.filename}")
-    return img
-
-@app.route('/recommend',methods=['POST'])
-def recommend_response():
-    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'page']
-    data = request.json
-    missing_fields = [field for field in required_fields if field not in data]
-    if missing_fields:
-        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
-
-    try:
-        page = int(data['page'])
-    except ValueError:
-        return make_response(jsonify({"error": "Invalid page value"}), 400)
-
-    is_final = False
-    start = page * 50
-    end = start + 50
-
-    df = _get_recommendations_from_session('dataframe', recommend, data)
-
-    if len(df) <= start:
-        return make_response(jsonify({"error": "Page out of index"}), 404)
-
-    if len(df) < end:
-        end = len(df)
-        is_final = True
-
-    df_slice = df.iloc[start:end, :]
-    json_data = df_slice.to_json(orient='index')
-    response = make_response(json_data, 200)
-    response.headers['isfinal'] = str(int(is_final))
-    return response
-
-@app.route('/recommend_season',methods=['POST'])
-def recommend_season_response():
-    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'season', 'page']
-    data = request.json
-    missing_fields = [field for field in required_fields if field not in data]
-    if missing_fields:
-        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
-
-    try:
-        page = int(data['page'])
-    except ValueError:
-        return make_response(jsonify({"error": "Invalid page value"}), 400)
-
-    is_final = False
-    start = page * 50
-    end = start + 50
-
-    df = _get_recommendations_from_session('dataframe', recommend_season, data)
-
-    if len(df) <= start:
-        return make_response(jsonify({"error": "Page out of index"}), 404)
-
-    if len(df) < end:
-        end = len(df)
-        is_final = True
-
-    df_slice = df.iloc[start:end, :]
-    json_data = df_slice.to_json(orient='index')
-    response = make_response(json_data, 200)
-    response.headers['isfinal'] = str(int(is_final))
-    return response
-
-def _get_recommendations_from_session(session_key, recommend_func, data):
-    """Helper function to get recommendations, either from session or by computing."""
-    if session_key in session:
-        df = pd.read_json(session[session_key], orient='index')
-    else:
-        df = recommend_func(
-            data['gender'],
-            data['age'],
-            data['color'],
-            data['faceshape'],
-            data['bodyshape']
-        ).reset_index(drop=True)
-        if df is None:
-            raise ValueError("Failed to generate recommendations")
-        df.columns = ['image', 'predict', 'average', 'total']
-        session[session_key] = df.to_json(orient='index')
-    return df
-
-@app.route('/photo/<gender>/<image_name>', methods=['GET'])
-def get_photo(gender, image_name):
-    valid_genders = ['man', 'woman']
-    if gender not in valid_genders:
-        return make_response(jsonify({"error": "Invalid gender"}), 400)
-
-    image_dir = f'../FashionWebp/{gender}'
-    if image_name.endswith('.jpg'):
-        image_name = image_name.rsplit('.', 1)[0] + '.webp'
-    image_path = os.path.join(image_dir, image_name)
-
-    if os.path.exists(image_path):
-        return send_file(image_path, mimetype='image/webp')
-    else:
-        return make_response(jsonify({"error": "Image not found"}), 404)
-
-@app.route("/clear")
-def session_out():
-    session.clear()
-    return make_response(jsonify({"info": "session clear"}), 200)
-
-@app.route('/feedback', methods=['POST'])
-def updade_model_req():
-    required_fields = ['gender', 'age', 'color', 'faceshape', 'bodyshape', 'clothes', 'rating']
-    data = request.json
-    missing_fields = [field for field in required_fields if field not in data]
-    if missing_fields:
-        return make_response(jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400)
-
-    # Enqueue the update task
-    job = task_queue.enqueue(update_data, data)
-    return make_response(jsonify({"info": f"Job submitted: {job.get_id()}"}), 200)
+app.register_blueprint(main_bp)
+app.register_blueprint(recommendation_bp)
+app.register_blueprint(feedback_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000,debug=True)
