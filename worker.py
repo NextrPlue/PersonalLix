@@ -1,6 +1,6 @@
 import redis
 from rq import Worker, Queue, Connection
-from random_forest import update_model
+from recommender import update_model
 redis_conn = redis.Redis()
 
 def update_data(data):

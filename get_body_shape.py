@@ -53,7 +53,7 @@ def getBodyShape_female(hip,shoulder,waist,bust,shoulder_height):
         return BodyShape.TRIANGLE
     return BodyShape.RECTANGLE
 
-def getBodyShape(image,image_handsup,gender,age):
+def get_body_shape(image,image_handsup,gender,age):
     gender_dict={'man':0,'woman':1}
     age = age//10 * 10
     age_dict={20:0,30:1,40:2,50:3,60:4}

@@ -9,7 +9,7 @@ output_details = interpreter.get_output_details()
 
 faceshape = ['heart','oblong','oval','round','square']
 face_cascade = cv2.CascadeClassifier('./model/haarcascade_frontalface_default.xml')
-def getFaceShape(faceimage):
+def get_face_shape(faceimage):
     
     
     try:
