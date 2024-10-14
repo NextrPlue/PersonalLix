@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from models.get_face_shape import get_face_shape
 from models.get_body_shape import get_body_shape
+from models.get_personal_color import get_personal_color
 
 main_bp = Blueprint('main_bp', __name__)
 
@@ -53,10 +54,14 @@ def upload_file():
     if body_shape is None:
         return make_response(jsonify({"error": "Failed to determine body shape"}), 400)
 
+    personal_color = get_personal_color(face_img)
+    if personal_color is None:
+        return make_response(jsonify({"error": "Failed to determine personal color"}), 400)
+
     result = {
         'gender': gender,
         'age': age,
-        'color': 'spring',  # Assuming default value; adjust as needed
+        'color': personal_color,  # Assuming default value; adjust as needed
         'faceshape': face_shape,
         'bodyshape': body_shape
     }
