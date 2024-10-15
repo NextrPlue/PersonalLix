@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, make_response, session, send_file
-import os
 import numpy as np
 import cv2
 from models.get_face_shape import get_face_shape
@@ -82,15 +81,8 @@ def get_photo(gender, image_name):
     if gender not in valid_genders:
         return make_response(jsonify({"error": "Invalid gender"}), 400)
 
-    image_dir = f'../FashionWebp/{gender}'
-    if image_name.endswith('.jpg'):
-        image_name = image_name.rsplit('.', 1)[0] + '.webp'
-    image_path = os.path.join(image_dir, image_name)
-
-    if os.path.exists(image_path):
-        return send_file(image_path, mimetype='image/webp')
-    else:
-        return make_response(jsonify({"error": "Image not found"}), 404)
+    image_dir = f'https://d151zhfcjlh4d7.cloudfront.net/{gender}/{image_name}'
+    return  make_response(jsonify(image_dir), 200)
 
 @main_bp.route("/clear")
 def session_out():
