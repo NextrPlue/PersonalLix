@@ -29,8 +29,8 @@ def recommend_response():
         return make_response(jsonify({"error": "Invalid page value"}), 400)
 
     is_final = False
-    start = page * 5
-    end = start + 5
+    start = page * 6
+    end = start + 6
 
     try:
         df = _get_recommendations_from_session(
@@ -68,8 +68,8 @@ def recommend_season_response():
         return make_response(jsonify({"error": "Invalid page value"}), 400)
 
     is_final = False
-    start = page * 5
-    end = start + 5
+    start = page * 6
+    end = start + 6
 
     try:
         df = _get_recommendations_from_session(
