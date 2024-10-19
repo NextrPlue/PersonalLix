@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>패션 추천 시스템</title>
+    <!-- 외부 CSS 파일 링크 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', ver='1.1') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>패션 추천 시스템</h1>
+    <form id="uploadForm">
+        <!-- 사진 업로드 영역 -->
+        <div id="photoUploadSection">
+            <div class="form-group">
+                <label for="face">얼굴 사진:</label>
+                <input type="file" id="face" name="face" accept="image/*">
+                <!-- 얼굴 사진 미리보기 -->
+                <div class="image-preview">
+                    <img id="facePreview" src="#" alt="얼굴 사진 미리보기" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="body">전신 사진:</label>
+                <input type="file" id="body" name="body" accept="image/*">
+                <!-- 전신 사진 미리보기 -->
+                <div class="image-preview">
+                    <img id="bodyPreview" src="#" alt="전신 사진 미리보기" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="body_handsup">팔을 올린 전신 사진:</label>
+                <input type="file" id="body_handsup" name="body_handsup" accept="image/*">
+                <!-- 팔을 올린 전신 사진 미리보기 -->
+                <div class="image-preview">
+                    <img id="bodyHandsupPreview" src="#" alt="팔을 올린 전신 사진 미리보기" style="display: none;">
+                </div>
+            </div>
+        </div>
+        <!-- 신체 정보 직접 입력 영역 -->
+        <div id="manualInputSection" style="display: none;">
+            <div class="form-group">
+                <label for="color">퍼스널 컬러:</label>
+                <select id="color" name="color">
+                    <option value="">선택하세요</option>
+                    <option value="spring">봄 웜톤</option>
+                    <option value="summer">여름 쿨톤</option>
+                    <option value="autumn">가을 웜톤</option>
+                    <option value="winter">겨울 쿨톤</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="faceshape">얼굴형:</label>
+                <select id="faceshape" name="faceshape">
+                    <option value="">선택하세요</option>
+                    <option value="round">둥근형</option>
+                    <option value="square">각진형</option>
+                    <option value="oval">계란형</option>
+                    <option value="heart">하트형</option>
+                    <option value="oblong">긴 얼굴형</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bodyshape">체형:</label>
+                <select id="bodyshape" name="bodyshape" disabled>
+                    <option value="">성별을 먼저 선택하세요</option>
+                    <!-- 옵션은 JavaScript에서 동적으로 추가됩니다. -->
+                </select>
+            </div>
+        </div>
+        <!-- 성별, 나이, 계절 선택 필드 -->
+        <div class="form-group">
+            <label for="gender">성별:</label>
+            <select id="gender" name="gender" required>
+                <option value="">성별을 선택하세요</option>
+                <option value="man">남성</option>
+                <option value="woman">여성</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="age">나이:</label>
+            <input type="number" id="age" name="age" min="20" max="60" step="10" required>
+        </div>
+        <!-- 계절 선택 탭 추가 -->
+        <div class="form-group">
+            <label for="season">계절 (선택 사항):</label>
+            <select id="season" name="season">
+                <option value="">선택하지 않음</option>
+                <option value="spring">봄</option>
+                <option value="summer">여름</option>
+                <option value="autumn">가을</option>
+                <option value="winter">겨울</option>
+            </select>
+        </div>
+        <!-- 버튼 영역 -->
+        <div class="button-group">
+            <button type="submit">추천 받기</button>
+            <button type="button" id="toggleInputMethodButton">신체 정보 직접 입력하기</button>
+        </div>
+    </form>
+
+    <div id="loading" style="display: none;">
+        <div class="loader"></div>
+        <div class="loading-text">데이터를 처리 중입니다...</div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div id="recommendations" class="recommendations"></div>
+
+    <div id="loadMoreContainer" class="load-more-container" style="display: none;">
+        <button id="loadMoreButton">더 보기</button>
+    </div>
+</div>
+
+<!-- 외부 JavaScript 파일 링크 -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+</body>
+</html>

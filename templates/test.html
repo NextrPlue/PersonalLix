@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>패션 추천 시스템</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="file"],
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4285F4;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+        .recommendations {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .recommendation-item {
+            margin-bottom: 30px; /* 여백 증가 */
+            border-bottom: 1px solid #ddd; /* 구분선 추가 */
+            padding-bottom: 20px; /* 패딩 추가 */
+        }
+        .recommendation-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #4285F4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .load-more-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .load-more-container button {
+            background-color: #34A853;
+        }
+        .load-more-container button:hover {
+            background-color: #2c8c47;
+        }
+        /* 옷 정보 스타일 추가 */
+        .clothes-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .clothes-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .clothes-info strong {
+            display: inline-block;
+            width: 150px; /* 레이블 너비 고정 */
+        }
+        /* 특징 섹션 스타일 */
+        .features {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e6f4ea;
+            border-radius: 5px;
+        }
+        .features p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .features strong {
+            display: inline-block;
+            width: 150px; /* 레이블 너비 고정 */
+        }
+        /* 개인 정보 섹션 스타일 추가 */
+        .personal-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e0f7fa;
+            border-radius: 5px;
+        }
+        .personal-info h3 {
+            margin-top: 0;
+        }
+        .personal-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .personal-info strong {
+            display: inline-block;
+            width: 120px; /* 레이블 너비 고정 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>패션 추천 시스템</h1>
+    <form id="uploadForm">
+        <div class="form-group">
+            <label for="face">얼굴 사진:</label>
+            <input type="file" id="face" name="face" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="body">전신 사진:</label>
+            <input type="file" id="body" name="body" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="body_handsup">팔을 올린 전신 사진:</label>
+            <input type="file" id="body_handsup" name="body_handsup" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="gender">성별:</label>
+            <select id="gender" name="gender" required>
+                <option value="">성별을 선택하세요</option>
+                <option value="man">남성</option>
+                <option value="woman">여성</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="age">나이:</label>
+            <input type="number" id="age" name="age" min="20" max="60" step="10" required>
+        </div>
+        <!-- 계절 선택 탭 추가 -->
+        <div class="form-group">
+            <label for="season">계절 (선택 사항):</label>
+            <select id="season" name="season">
+                <option value="">선택하지 않음</option>
+                <option value="spring">봄</option>
+                <option value="summer">여름</option>
+                <option value="autumn">가을</option>
+                <option value="winter">겨울</option>
+            </select>
+        </div>
+        <button type="submit">추천 받기</button>
+    </form>
+
+    <div id="loading" style="display: none;">
+        <div class="loader"></div>
+        <div class="loading-text">데이터를 처리 중입니다...</div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div id="recommendations" class="recommendations"></div>
+
+    <div id="loadMoreContainer" class="load-more-container" style="display: none;">
+        <button id="loadMoreButton">더 보기</button>
+    </div>
+</div>
+
+<script>
+    let currentPage = 0;
+    let isFinalPage = false; // 마지막 페이지 여부
+    let isLoading = false;
+    let userAttributes = {}; // 사용자 속성을 저장할 객체
+    let selectedSeason = ''; // 선택된 계절
+
+    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        // 이전 결과 및 오류 메시지 초기화
+        document.getElementById('recommendations').innerHTML = '';
+        document.getElementById('error').innerText = '';
+        document.getElementById('loadMoreContainer').style.display = 'none';
+        currentPage = 0;
+        isFinalPage = false;
+
+        // 표시 로딩 상태
+        document.getElementById('loading').style.display = 'block';
+
+        const formData = new FormData();
+        formData.append('face', document.getElementById('face').files[0]);
+        formData.append('body', document.getElementById('body').files[0]);
+        formData.append('body_handsup', document.getElementById('body_handsup').files[0]);
+        formData.append('gender', document.getElementById('gender').value);
+        formData.append('age', document.getElementById('age').value);
+
+        // 계절 선택 여부 확인
+        selectedSeason = document.getElementById('season').value;
+        if (selectedSeason) {
+            formData.append('season', selectedSeason);
+        }
+
+        try {
+            // 1단계: 이미지 업로드 및 사용자 속성 획득
+            const uploadResponse = await fetch('http://localhost:5000/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadResult = await uploadResponse.json();
+
+            if (!uploadResponse.ok) {
+                throw new Error(uploadResult.error || '이미지 처리에 실패했습니다.');
+            }
+
+            // 사용자 속성 추출
+            const { gender, age, color, faceshape, bodyshape } = uploadResult;
+            userAttributes = { gender, age, color, faceshape, bodyshape };
+
+            // 3단계: 개인 정보 표시 (첫 번째 페이지에만)
+            displayPersonalInfo(color, faceshape, bodyshape);
+
+            // 2단계: 첫 번째 추천 요청
+            await fetchAndDisplayRecommendations(currentPage);
+        } catch (error) {
+            document.getElementById('error').innerText = error.message;
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+
+    document.getElementById('loadMoreButton').addEventListener('click', async function() {
+        if (isLoading || isFinalPage) return;
+        currentPage += 1;
+        await fetchAndDisplayRecommendations(currentPage);
+    });
+
+    async function fetchAndDisplayRecommendations(page) {
+        isLoading = true;
+        // 표시 로딩 상태
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').innerText = '';
+
+        try {
+            // 추천 요청
+            let recommendEndpoint = 'http://localhost:5000/recommend';
+            const requestBody = {
+                ...userAttributes,
+                page: page
+            };
+
+            if (selectedSeason) {
+                recommendEndpoint = 'http://localhost:5000/recommend_season';
+                requestBody.season = selectedSeason;
+            }
+
+            const recommendResponse = await fetch(recommendEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const recommendResult = await recommendResponse.json();
+
+            if (!recommendResponse.ok) {
+                throw new Error(recommendResult.error || '추천을 받는 데 실패했습니다.');
+            }
+
+            // 추천 결과 표시
+            const hasMore = await displayRecommendations(recommendResult, userAttributes.gender);
+
+            // 'isfinal' 헤더 확인
+            if (selectedSeason) {
+                const isFinalHeader = recommendResponse.headers.get('isfinal');
+                isFinalPage = isFinalHeader === '1';
+            } else {
+                // 기존 /recommend 엔드포인트에서는 'isfinal' 헤더가 없으므로, 아이템 수로 판단
+                isFinalPage = recommendResult && Object.keys(recommendResult).length < 5;
+            }
+
+            // "더 보기" 버튼 표시 여부 결정
+            if (!isFinalPage) {
+                document.getElementById('loadMoreContainer').style.display = 'block';
+            } else {
+                document.getElementById('loadMoreContainer').style.display = 'none';
+            }
+        } catch (error) {
+            document.getElementById('error').innerText = error.message;
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            isLoading = false;
+        }
+    }
+
+    async function displayRecommendations(data, gender) {
+        const recommendationsDiv = document.getElementById('recommendations');
+
+        // 제목 추가 (처음 페이지에만)
+        if (currentPage === 0) {
+            const title = document.createElement('h2');
+            title.innerText = '추천 패션 아이템';
+            recommendationsDiv.appendChild(title);
+        }
+
+        const items = Object.values(data);
+
+        if (items.length === 0) {
+            if (currentPage === 0) {
+                recommendationsDiv.innerHTML += '<p>추천된 패션 아이템이 없습니다.</p>';
+            }
+            return false; // 더 이상 페이지가 없음
+        }
+
+        for (const item of items) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'recommendation-item';
+
+            // /photo 엔드포인트를 통해 이미지 URL을 가져옴
+            try {
+                const photoResponse = await fetch(`http://localhost:5000/photo/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
+                const photoResult = await photoResponse.json();
+
+                if (!photoResponse.ok) {
+                    throw new Error(photoResult.error || '이미지 URL을 가져오는 데 실패했습니다.');
+                }
+
+                const imageUrl = photoResult; // CloudFront 이미지 URL
+
+                const image = document.createElement('img');
+                image.src = imageUrl;
+                image.alt = item.image;
+
+                const info = document.createElement('p');
+                info.innerHTML = `<strong>이미지:</strong> ${item.image}<br>
+                                  <strong>예상 평점:</strong> ${item.predict.toFixed(2)}<br>
+                                  <strong>평균 평점:</strong> ${item.average.toFixed(2)}<br>
+                                  <strong>총 점수:</strong> ${item.total.toFixed(2)}`;
+
+                itemDiv.appendChild(image);
+                itemDiv.appendChild(info);
+
+                // 옷 정보 API 호출
+                try {
+                    const clothesInfoResponse = await fetch(`http://localhost:5000/info/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
+                    const clothesInfoResult = await clothesInfoResponse.json();
+
+                    if (!clothesInfoResponse.ok) {
+                        throw new Error(clothesInfoResult.error || '옷 정보 가져오기에 실패했습니다.');
+                    }
+
+                    // 옷 정보 추출 (첫 번째 키의 값 사용)
+                    const clothesInfo = Object.values(clothesInfoResult)[0];
+
+                    // 옷의 비-불리언 필드 및 특징 추출
+                    const nonBooleanFields = {};
+                    const features = [];
+
+                    for (const [key, value] of Object.entries(clothesInfo)) {
+                        if (typeof value === 'boolean') {
+                            if (value) {
+                                features.push(key);
+                            }
+                        } else {
+                            nonBooleanFields[key] = value;
+                        }
+                    }
+
+                    // 비-불리언 필드 표시
+                    const clothesInfoDiv = document.createElement('div');
+                    clothesInfoDiv.className = 'clothes-info';
+
+                    for (const [key, value] of Object.entries(nonBooleanFields)) {
+                        const paragraph = document.createElement('p');
+                        paragraph.innerHTML = `<strong>${key}:</strong> ${value}`;
+                        clothesInfoDiv.appendChild(paragraph);
+                    }
+
+                    itemDiv.appendChild(clothesInfoDiv);
+
+                    // 특징 섹션 추가 (true인 항목만)
+                    if (features.length > 0) {
+                        const featuresDiv = document.createElement('div');
+                        featuresDiv.className = 'features';
+
+                        const featuresParagraph = document.createElement('p');
+                        featuresParagraph.innerHTML = `<strong>특징:</strong> ${features.join(', ')}`;
+                        featuresDiv.appendChild(featuresParagraph);
+
+                        itemDiv.appendChild(featuresDiv);
+                    }
+                } catch (err) {
+                    // 옷 정보 로딩 실패 시 대체 텍스트 표시
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerText = `옷 정보 로딩 실패: ${item.image}`;
+                    itemDiv.appendChild(errorDiv);
+                }
+
+                recommendationsDiv.appendChild(itemDiv);
+            } catch (err) {
+                // 이미지 로딩 실패 시 대체 텍스트 표시
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.innerText = `이미지 로딩 실패: ${item.image}`;
+                recommendationsDiv.appendChild(errorDiv);
+            }
+        }
+
+        // 추가 페이지가 있는지 판단
+        // 여기서는 서버에서 추가 정보를 제공하지 않으므로, 예시로 아이템 수가 5개 미만이면 더 이상 없다고 가정
+        if (items.length < 5) { // 페이지당 5개 아이템 가정
+            return false; // 더 이상 페이지가 없음
+        }
+
+        return true; // 더 보기 가능
+    }
+
+    function displayPersonalInfo(color, faceshape, bodyshape) {
+        const recommendationsDiv = document.getElementById('recommendations');
+
+        const personalInfoDiv = document.createElement('div');
+        personalInfoDiv.className = 'personal-info';
+
+        const infoTitle = document.createElement('h3');
+        infoTitle.innerText = '개인 정보';
+        personalInfoDiv.appendChild(infoTitle);
+
+        const colorPara = document.createElement('p');
+        colorPara.innerHTML = `<strong>퍼스널 컬러:</strong> ${color}`;
+        personalInfoDiv.appendChild(colorPara);
+
+        const faceshapePara = document.createElement('p');
+        faceshapePara.innerHTML = `<strong>얼굴형:</strong> ${faceshape}`;
+        personalInfoDiv.appendChild(faceshapePara);
+
+        const bodyshapePara = document.createElement('p');
+        bodyshapePara.innerHTML = `<strong>체형:</strong> ${bodyshape}`;
+        personalInfoDiv.appendChild(bodyshapePara);
+
+        recommendationsDiv.appendChild(personalInfoDiv);
+    }
+</script>
+
+</body>
+</html>

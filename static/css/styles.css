@@ -1,0 +1,263 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 20px;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+form {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="file"],
+select,
+input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #4285F4;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+button:hover {
+    background-color: #357ae8;
+}
+
+/* 버튼 그룹 스타일 */
+.button-group {
+    display: flex;
+    justify-content: flex-start; /* 필요에 따라 조정 */
+    align-items: center;
+    gap: 10px; /* 버튼 사이의 간격 */
+    margin-top: 20px;
+}
+
+.button-group button {
+    flex: none;
+}
+
+/* 그리드 컨테이너 조정 */
+.recommendations {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* 추천 아이템 조정 */
+.recommendation-item {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 이미지 크기 조정 */
+.recommendation-item img {
+    width: 100%;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+/* 텍스트 스타일 */
+.recommendation-item p {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+/* 레이블과 값의 간격 조절 */
+.clothes-info strong,
+.features strong,
+.personal-info strong {
+    display: inline-block;
+    margin-right: 5px;
+    white-space: nowrap; /* 단어가 줄바꿈되지 않도록 설정 */
+    flex-shrink: 0; /* 레이블이 축소되지 않도록 설정 */
+}
+
+/* 부모 요소에 플렉스 레이아웃 적용 */
+.personal-info p,
+.clothes-info p,
+.features p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* 필요 시 줄바꿈 허용 */
+}
+
+/* 오류 메시지 스타일 */
+.error {
+    color: red;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 로딩 스피너 스타일 */
+.loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #4285F4;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 더 보기 버튼 컨테이너 스타일 */
+.load-more-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.load-more-container button {
+    background-color: #34A853;
+}
+
+.load-more-container button:hover {
+    background-color: #2c8c47;
+}
+
+/* 옷 정보 섹션 스타일 */
+.clothes-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.clothes-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.features {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e6f4ea;
+    border-radius: 5px;
+}
+
+.features p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* 개인 정보 섹션 스타일 */
+.personal-info {
+    width: 100%; /* 부모 컨테이너의 너비를 완전히 채움 */
+    margin: 0 0 20px 0; /* 좌우 마진을 제거하여 부모에 밀착 */
+    padding: 15px;
+    background-color: #e0f7fa;
+    border-radius: 5px;
+}
+
+.personal-info h3 {
+    margin-top: 0;
+}
+
+.personal-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* 추천 섹션 제목 스타일 */
+.recommendations h2 {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 이미지 미리보기 스타일 */
+.image-preview {
+    width: 100%;
+    max-width: 200px; /* 미리보기 이미지의 최대 너비 설정 */
+    max-height: 200px; /* 최대 높이 설정 */
+    overflow: hidden; /* 이미지를 컨테이너 안에 잘라서 표시 */
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* 신체 정보 직접 입력 섹션 내부의 폼 그룹 스타일 동일하게 적용 */
+#manualInputSection .form-group {
+    margin-bottom: 15px;
+}
+
+#manualInputSection label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#manualInputSection select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+}
+
+/* 반응형 디자인을 위한 미디어 쿼리 */
+@media (max-width: 800px) {
+    .recommendations {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+@media (min-width: 801px) and (max-width: 1100px) {
+    .recommendations {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
