@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, make_response, session, send_file
+from flask import Blueprint, request, jsonify, make_response, session, send_file, render_template
 import numpy as np
 import cv2
 from models.get_face_shape import get_face_shape
@@ -15,7 +15,7 @@ def allowed_file(filename):
 
 @main_bp.route("/")
 def hello_world():
-    return "<p>Hello, World!</p>"
+    return render_template('index.html')
 
 @main_bp.route('/upload',methods=['POST'])
 def upload_file():
