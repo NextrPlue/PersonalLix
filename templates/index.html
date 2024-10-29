@@ -80,7 +80,7 @@
         </div>
         <div class="form-group">
             <label for="age">나이:</label>
-            <input type="number" id="age" name="age" min="20" max="60" step="10" required>
+            <input type="number" id="age" name="age" required>
         </div>
         <!-- 계절 선택 탭 추가 -->
         <div class="form-group">
@@ -111,6 +111,25 @@
 
     <div id="loadMoreContainer" class="load-more-container" style="display: none;">
         <button id="loadMoreButton">더 보기</button>
+    </div>
+</div>
+
+<!-- 평점 모달 추가 -->
+<!-- Rating Modal -->
+<div id="ratingModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>패션 아이템 평가</h2>
+        <img id="ratingImage" src="#" alt="패션 아이템 이미지">
+        <div class="rating-stars">
+            <!-- 별점 입력 (1~5) -->
+            <span class="star" data-value="5">&#9733;</span>
+            <span class="star" data-value="4">&#9733;</span>
+            <span class="star" data-value="3">&#9733;</span>
+            <span class="star" data-value="2">&#9733;</span>
+            <span class="star" data-value="1">&#9733;</span>
+        </div>
+        <button id="submitRatingButton">평점 제출</button>
     </div>
 </div>
 

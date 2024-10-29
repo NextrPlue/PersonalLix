@@ -31,12 +31,21 @@ document.getElementById('body_handsup').addEventListener('change', function() {
     previewImage(this, 'bodyHandsupPreview');
 });
 
+// 추가된 변수 및 함수 선언
 let currentPage = 0;
 let isFinalPage = false; // 마지막 페이지 여부
 let isLoading = false;
 let userAttributes = {}; // 사용자 속성을 저장할 객체
 let selectedSeason = ''; // 선택된 계절
 let manualInput = false; // 신체 정보 직접 입력 여부
+
+// 모달 관련 변수
+let ratingModal = document.getElementById('ratingModal');
+let ratingImage = document.getElementById('ratingImage');
+let ratingStars = document.querySelectorAll('.rating-stars .star');
+let submitRatingButton = document.getElementById('submitRatingButton');
+let selectedRating = 0;
+let currentRatedItem = '';
 
 // 성별 선택 시 체형 옵션 업데이트 함수
 function updateBodyShapeOptions() {
@@ -329,6 +338,11 @@ async function displayRecommendations(data, gender) {
             image.src = imageUrl;
             image.alt = item.image;
 
+            // 이미지 클릭 이벤트 리스너 추가 (평점 모달 열기)
+            image.addEventListener('click', function() {
+                openRatingModal(item.image, imageUrl);
+            });
+
             const info = document.createElement('p');
             info.innerHTML = `<strong>예상 평점:</strong> ${item.predict.toFixed(2)}<br>
                               <strong>평균 평점:</strong> ${item.average.toFixed(2)}<br>
@@ -450,3 +464,96 @@ function displayPersonalInfo(color, faceshape, bodyshape) {
     // personalInfoDiv를 recommendationsDiv 이전에 삽입
     parentDiv.insertBefore(personalInfoDiv, recommendationsDiv);
 }
+
+// 모달 열기 함수
+function openRatingModal(imageName, imageUrl) {
+    currentRatedItem = imageName;
+    ratingImage.src = imageUrl;
+    ratingModal.style.display = 'block';
+}
+
+// 별점 클릭 이벤트 리스너 추가
+ratingStars.forEach(function(star) {
+    star.addEventListener('click', function() {
+        selectedRating = this.getAttribute('data-value');
+        // 선택된 별점 표시 업데이트
+        ratingStars.forEach(function(s) {
+            if (s.getAttribute('data-value') <= selectedRating) {
+                s.classList.add('selected');
+            } else {
+                s.classList.remove('selected');
+            }
+        });
+    });
+});
+
+// 평점 제출 버튼 클릭 이벤트
+submitRatingButton.addEventListener('click', function() {
+    if (selectedRating > 0) {
+        submitRating();
+    } else {
+        alert('평점을 선택하세요.');
+    }
+});
+
+// 평점 제출 함수
+function submitRating() {
+    // 필요한 데이터 수집
+    const data = {
+        gender: userAttributes.gender,
+        age: userAttributes.age,
+        color: userAttributes.color,
+        faceshape: userAttributes.faceshape,
+        bodyshape: userAttributes.bodyshape,
+        clothes: currentRatedItem,
+        rating: selectedRating
+    };
+
+    // 서버로 데이터 전송
+    fetch('http://localhost:5000/feedback', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(function(response) {
+        return response.json();
+    }).then(function(result) {
+        if (result.error) {
+            alert('평점 제출에 실패했습니다: ' + result.error);
+        } else {
+            alert('평점이 제출되었습니다.');
+            // 모달 닫기
+            ratingModal.style.display = 'none';
+            // 선택된 평점 초기화
+            selectedRating = 0;
+            ratingStars.forEach(function(s) {
+                s.classList.remove('selected');
+            });
+        }
+    }).catch(function(error) {
+        alert('평점 제출에 실패했습니다.');
+    });
+}
+
+// 모달 닫기 버튼 이벤트 리스너
+document.querySelector('#ratingModal .close').addEventListener('click', function() {
+    ratingModal.style.display = 'none';
+    // 선택된 평점 초기화
+    selectedRating = 0;
+    ratingStars.forEach(function(s) {
+        s.classList.remove('selected');
+    });
+});
+
+// 모달 외부 클릭 시 모달 닫기
+window.addEventListener('click', function(event) {
+    if (event.target == ratingModal) {
+        ratingModal.style.display = 'none';
+        // 선택된 평점 초기화
+        selectedRating = 0;
+        ratingStars.forEach(function(s) {
+            s.classList.remove('selected');
+        });
+    }
+});
