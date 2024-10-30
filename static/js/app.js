@@ -187,7 +187,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
             }
 
             // 1단계: 이미지 업로드 및 사용자 속성 획득
-            const uploadResponse = await fetch('http://localhost:5000/upload', {
+            const uploadResponse = await fetch('http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -249,14 +249,14 @@ async function fetchAndDisplayRecommendations(page) {
 
     try {
         // 추천 요청
-        let recommendEndpoint = 'http://localhost:5000/recommend';
+        let recommendEndpoint = 'http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/recommend';
         const requestBody = {
             ...userAttributes,
             page: page
         };
 
         if (selectedSeason) {
-            recommendEndpoint = 'http://localhost:5000/recommend_season';
+            recommendEndpoint = 'http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/recommend_season';
             requestBody.season = selectedSeason;
         }
 
@@ -325,7 +325,7 @@ async function displayRecommendations(data, gender) {
 
         // /photo 엔드포인트를 통해 이미지 URL을 가져옴
         try {
-            const photoResponse = await fetch(`http://localhost:5000/photo/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
+            const photoResponse = await fetch(`http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/photo/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
             const photoResult = await photoResponse.json();
 
             if (!photoResponse.ok) {
@@ -353,7 +353,7 @@ async function displayRecommendations(data, gender) {
 
             // 옷 정보 API 호출
             try {
-                const clothesInfoResponse = await fetch(`http://localhost:5000/info/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
+                const clothesInfoResponse = await fetch(`http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/info/${encodeURIComponent(gender)}/${encodeURIComponent(item.image)}`);
                 const clothesInfoResult = await clothesInfoResponse.json();
 
                 if (!clothesInfoResponse.ok) {
@@ -510,7 +510,7 @@ function submitRating() {
     };
 
     // 서버로 데이터 전송
-    fetch('http://localhost:5000/feedback', {
+    fetch('http://ec2-15-164-141-236.ap-northeast-2.compute.amazonaws.com:5000/feedback', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
