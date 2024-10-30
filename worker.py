@@ -1,8 +1,7 @@
-import redis
-from rq import Worker, Queue, Connection
+from rq import Worker, Queue
+from rq.connections import Connection
 from models.recommender import update_model
-
-redis_conn = redis.Redis()
+from extensions import redis_conn
 
 def update_data(data):
     update_model(
